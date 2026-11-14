@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المنصة التعليمية - Machine Learning Exam Simulator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Cairo & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Cairo', 'Inter', sans-serif;
+            background-color: #f4f6f9;
+        }
+        .en-text {
+            font-family: 'Inter', sans-serif;
+            direction: ltr;
+            text-align: left;
+        }
+        .option-row {
+            transition: all 0.18s ease-in-out;
+        }
+        .option-row:hover:not(.disabled-option) {
+            border-color: #2563eb;
+            background-color: #f8fafc;
+        }
+        /* Custom Scrollbar for Question Grid */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col text-slate-800">
+
+    <!-- Top University Portal Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            <!-- Right Side: Portal Branding -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-sm">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-slate-900 leading-tight">المنصة التعليمية</h1>
+                    <p class="text-xs text-slate-500 en-text">Machine Learning Exam Simulator</p>
+                </div>
+            </div>
+
+            <!-- Center: Exam Switcher Tabs -->
+            <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+                <button id="tab-exam1" onclick="switchExam('exam1')" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all bg-blue-600 text-white shadow-sm">
+                    امتحان 1: الكويز والميدتيرم (62 سؤال)
+                </button>
+                <button id="tab-exam2" onclick="switchExam('exam2')" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-600 hover:text-slate-900">
+                    امتحان 2: المتوقع بأسلوب الدكتور (30 سؤال)
+                </button>
+            </div>
+
+            <!-- Left Side: Mode Switcher -->
+            <div class="flex items-center gap-2">
+                <div class="inline-flex rounded-lg border border-slate-300 bg-slate-50 p-0.5 text-xs font-semibold">
+                    <button id="mode-practice" onclick="setMode('practice')" class="px-2.5 py-1 rounded-md bg-emerald-600 text-white shadow-sm transition-all flex items-center gap-1" title="يظهر الصح والغلط مع الشرح فور اختيار الإجابة">
+                        <i class="fa-solid fa-bolt"></i> تدريب فوري
+                    </button>
+                    <button id="mode-real" onclick="setMode('real')" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1" title="يخفي الإجابات حتى تسليم الامتحان بالكامل">
+                        <i class="fa-solid fa-clock"></i> امتحان فعلي
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-3xl w-full mx-auto px-4 py-6">
+
+        <!-- Exam Active View -->
+        <div id="exam-active-view" class="space-y-5">
+
+            <!-- Quiz Status Card (Matches University Portal Screenshot) -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5">
+                <div class="flex items-center justify-between mb-2">
+                    <span id="exam-title-badge" class="font-bold text-slate-900 text-base sm:text-lg en-text">Midterm & Quiz 1 Bank</span>
+                    <div class="flex items-center gap-4 text-xs sm:text-sm text-slate-600 en-text font-medium">
+                        <span>points: 1</span>
+                        <span class="flex items-center gap-1 text-slate-700 font-semibold">
+                            <i class="fa-regular fa-clock text-blue-600"></i>
+                            <span id="timer-display">00:00</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between text-xs text-slate-500 mb-2">
+                    <span id="live-score-pill" class="font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                        تمت الإجابة: 0 / 62
+                    </span>
+                    <span id="question-counter-text" class="en-text font-semibold text-slate-700">Question 1 of 62</span>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden" dir="ltr">
+                    <div id="progress-bar-fill" class="bg-blue-600 h-full transition-all duration-300" style="width: 2%;"></div>
+                </div>
+            </div>
+
+            <!-- Question Box (Matches University Portal Screenshot) -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 sm:p-7">
+                <!-- Question Header & Flag Button -->
+                <div class="flex items-start justify-between gap-4 mb-5">
+                    <h2 id="question-text" class="en-text text-base sm:text-lg font-semibold text-slate-900 leading-relaxed flex-grow">
+                        Loading question...
+                    </h2>
+                    <button id="flag-btn" onclick="toggleFlagCurrent()" class="shrink-0 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-500 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-300 transition-all flex items-center gap-1.5" title="تعليم السؤال للمراجعة لاحقاً">
+                        <i class="fa-regular fa-flag"></i>
+                        <span class="hidden sm:inline">مراجعة</span>
+                    </button>
+                </div>
+
+                <!-- Options Container -->
+                <div id="options-container" class="space-y-3" dir="ltr">
+                    <!-- Dynamic Options Injected Here -->
+                </div>
+
+                <!-- Instant Explanation Box (Visible in Practice Mode after answering) -->
+                <div id="explanation-box" class="hidden mt-5 rounded-xl p-4 border text-sm leading-relaxed">
+                    <div class="flex items-start gap-2.5">
+                        <i id="explanation-icon" class="fa-solid fa-circle-info mt-1 text-base"></i>
+                        <div>
+                            <div id="explanation-status" class="font-bold mb-1"></div>
+                            <p id="explanation-text" class="text-slate-700"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Controls Row (Matches University Portal Screenshot) -->
+            <div class="flex flex-wrap items-center justify-between gap-3" dir="ltr">
+                <div class="flex items-center gap-2">
+                    <button id="next-btn" onclick="nextQuestion()" class="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold px-6 py-2.5 rounded-lg shadow-sm transition-all text-sm flex items-center gap-2">
+                        <span>Next</span>
+                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                    </button>
+                    <button id="submit-exam-btn" onclick="openSubmitModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2.5 rounded-lg shadow-sm transition-all text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-check-double"></i>
+                        <span>Submit Exam</span>
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="resetCurrentExam()" class="text-xs font-semibold text-slate-500 hover:text-rose-600 px-3 py-2.5 rounded-lg border border-transparent hover:border-rose-200 hover:bg-rose-50 transition-all" title="إعادة تصفير الامتحان الحالي">
+                        <i class="fa-solid fa-rotate-right mr-1"></i> Reset
+                    </button>
+                    <button id="prev-btn" onclick="prevQuestion()" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-semibold px-5 py-2.5 rounded-lg shadow-sm transition-all text-sm disabled:opacity-40 disabled:pointer-events-none flex items-center gap-2">
+                        <i class="fa-solid fa-chevron-left text-xs"></i>
+                        <span>Previous</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Numbered Question Grid (Matches University Portal Screenshot) -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3 text-xs text-slate-500">
+                    <span class="font-bold text-slate-700">خريطة الأسئلة (اضغط للانتقال السريع):</span>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-blue-600 inline-block"></span> السؤال الحالي</span>
+                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-emerald-100 border border-emerald-500 inline-block"></span> تمت الإجابة</span>
+                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-amber-100 border border-amber-500 inline-block"></span> معلم للمراجعة</span>
+                    </div>
+                </div>
+                <div id="question-grid" class="flex flex-wrap gap-1.5 justify-center sm:justify-start" dir="ltr">
+                    <!-- Numbered Buttons 1..N Injected Here -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Exam Results & Full Review View (Hidden until Submit Exam) -->
+        <div id="exam-results-view" class="hidden space-y-6">
+            <!-- Score Summary Banner -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 text-center">
+                <div id="result-badge-icon" class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-3xl bg-emerald-100 text-emerald-600">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold text-slate-900 mb-1">نتيجة الامتحان النهائية</h2>
+                <p id="result-exam-name" class="text-sm text-slate-500 mb-6"></p>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto mb-6">
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                        <div class="text-xs text-slate-500 mb-1">الدرجة الكلية</div>
+                        <div id="res-score-fraction" class="text-xl font-extrabold text-slate-900 en-text">0 / 0</div>
+                    </div>
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
+                        <div class="text-xs text-emerald-700 mb-1">إجابات صحيحة</div>
+                        <div id="res-correct-count" class="text-xl font-extrabold text-emerald-700 en-text">0</div>
+                    </div>
+                    <div class="bg-rose-50 border border-rose-200 rounded-xl p-3">
+                        <div class="text-xs text-rose-700 mb-1">إجابات خاطئة / متروكة</div>
+                        <div id="res-wrong-count" class="text-xl font-extrabold text-rose-700 en-text">0</div>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                        <div class="text-xs text-blue-700 mb-1">النسبة المئوية</div>
+                        <div id="res-percentage" class="text-xl font-extrabold text-blue-700 en-text">0%</div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-center gap-3">
+                    <button onclick="returnToQuestions()" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-right"></i> العودة للأسئلة
+                    </button>
+                    <button onclick="resetCurrentExam()" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-sm transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-rotate-right"></i> إعادة حل الامتحان من جديد
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Bar for Detailed Review -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-wrap items-center justify-between gap-3">
+                <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-blue-600"></i>
+                    مراجعة الإجابات والشرح التفصيلي:
+                </h3>
+                <div class="flex flex-wrap items-center gap-1.5 text-xs font-bold">
+                    <button id="filter-all" onclick="filterReview('all')" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white">الكل</button>
+                    <button id="filter-wrong" onclick="filterReview('wrong')" class="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">الأخطاء فقط</button>
+                    <button id="filter-flagged" onclick="filterReview('flagged')" class="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">المعلم للمراجعة</button>
+                </div>
+            </div>
+
+            <!-- Review Cards List -->
+            <div id="review-cards-container" class="space-y-4">
+                <!-- Populated dynamically on submit -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Custom Confirmation Modal (No browser alert/confirm) -->
+    <div id="modal-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200">
+            <h3 id="modal-title" class="text-lg font-extrabold text-slate-900 mb-2">تأكيد تسليم الامتحان</h3>
+            <p id="modal-body" class="text-sm text-slate-600 mb-6 leading-relaxed"></p>
+            <div class="flex items-center justify-end gap-3">
+                <button onclick="closeModal()" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-semibold text-sm hover:bg-slate-100">إلغاء</button>
+                <button id="modal-confirm-btn" class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-sm">تأكيد</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // QUESTION BANKS (EXAM 1: 62 Qs | EXAM 2: 30 Qs)
+        // ==========================================
+        const examData = {
+            exam1: {
+                title: "Midterm & Quiz 1 Official Bank (62 Questions)",
+                questions: [
+                    { q: "1) Which algorithm uses the sigmoid function to predict probabilities?", options: ["Linear Regression", "Decision Trees", "Logistic Regression", "k-Means Clustering"], answer: 2, exp: "الـ Logistic Regression بتستخدم دالة Sigmoid لتحويل المخرجات لاحتمالات بين 0 و 1." },
+                    { q: "2) Which technique is used to split data into training and test sets multiple times for evaluation?", options: ["Cross-validation", "Holdout method", "Clustering", "PCA"], answer: 0, exp: "الـ Cross-validation (زي k-Fold) بتقسم البيانات عدة مرات لتدريب واختبار الموديل للتأكد من كفاءته." },
+                    { q: "3) Which of the following is a key characteristic of polynomial regression?", options: ["The model fits data using straight lines", "It is always linear in terms of the parameters", "It is prone to underfitting", "It only works for binary classification problems"], answer: 1, exp: "رغم إن العلاقة بين x و y غير خطية، إلا أن المعادلة تظل خطية بالنسبة للمعاملات (Parameters/Weights)." },
+                    { q: "4) Which of the following metrics is used to evaluate regression models?", options: ["Precision", "Recall", "Mean Squared Error (MSE)", "F1-Score"], answer: 2, exp: "الـ MSE يقيس متوسط مربع الفروق في مهام الـ Regression، بينما الباقي لمهام الـ Classification." },
+                    { q: "5) Elastic Net Regression is a hybrid of which two regression methods?", options: ["Ridge and Polynomial Regression", "Lasso and Logistic Regression", "Lasso and Ridge Regression", "Decision Tree and Random Forest Regression"], answer: 2, exp: "الـ Elastic Net يدمج غرامة L1 (Lasso) مع غرامة L2 (Ridge)." },
+                    { q: "6) What is the purpose of validation data in the machine learning workflow?", options: ["To train the model", "To evaluate the model's performance", "To tune hyperparameters", "To collect new data"], answer: 2, exp: "بيانات الـ Validation تُستخدم لضبط إعدادات الموديل (Tune hyperparameters) أثناء التطوير." },
+                    { q: "7) Which of the following is an example of a classification problem?", options: ["Predicting house prices", "Predicting tumor size", "Predicting if an email is spam or not", "Predicting the time taken for a car trip"], answer: 2, exp: "تحديد الإيميل Spam أو Not Spam هو تصنيف لفئات محددة (Binary Classification)." },
+                    { q: "8) Which of the following is NOT a type of machine learning?", options: ["Supervised Learning", "Reinforced Learning", "Unsupervised Learning", "Structured Learning"], answer: 3, exp: "أنواع تعلم الآلة هي Supervised و Unsupervised و Semi-supervised و Reinforcement؛ مفيش حاجة اسمها Structured Learning." },
+                    { q: "9) The log of odds in logistic regression is used to:", options: ["Limit the output to between 0 and 1", "Remove range restrictions on predicted values", "Penalize large feature values", "Normalize input data"], answer: 1, exp: "الـ Log of odds (Logit) يحول المدى من (0,1) إلى (-∞, +∞) لإزالة قيود المدى على القيم المتوقعة." },
+                    { q: "10) The hypothesis in logistic regression is mapped to a probability using which function?", options: ["Linear function", "Exponential function", "Sigmoid function", "Logarithmic function"], answer: 2, exp: "دالة الـ Sigmoid هي التي تحول المعادلة الخطية إلى احتمالية بين 0 و 1." },
+                    { q: "11) In SVM, the kernel trick is used to:", options: ["Separate linearly separable data only", "Map data into a higher-dimensional space for linear separability", "Reduce the number of support vectors", "Increase the complexity of the model without regularization"], answer: 1, exp: "الـ Kernel trick يرفع البيانات غير الخطية لأبعاد أعلى حتى يمكن فصلها خطياً." },
+                    { q: "12) What is the function of the penalty term in SVM for non-linearly separable data?", options: ["To increase the margin", "To handle misclassifications", "To minimize the distance to the support vectors", "To find the nearest neighbors"], answer: 1, exp: "معامل الغرامة (Penalty term C) يتحكم في التسامح مع أخطاء التصنيف (Misclassifications)." },
+                    { q: "13) What type of optimization problem does an SVM solve?", options: ["Linear programming problem", "Quadratic programming problem", "Convex programming problem", "Non-linear programming problem"], answer: 1, exp: "تعظيم الهامش في SVM يتم صياغته وحله كمسألة Quadratic programming problem." },
+                    { q: "14) Which of the following tasks is an example of regression?", options: ["Classifying emails as spam or not spam", "Predicting house prices", "Grouping customers into segments", "Recognizing spoken words"], answer: 1, exp: "توقع أسعار البيوت هو توقع لقيمة رقمية مستمرة (Continuous value) أي Regression." },
+                    { q: "15) What is the main goal of supervised learning?", options: ["Find patterns in unlabeled data", "Classify data without prior knowledge", "Learn a mapping from inputs to known outputs", "Perform clustering on input data"], answer: 2, exp: "الهدف من التعلم الخاضع للإشراف هو تعلم دالة تربط المدخلات بالمخرجات المعروفة مسبقاً." },
+                    { q: "16) Which of the following best describes a non-linear SVM?", options: ["It uses a linear kernel to classify data in one dimension.", "It maps data into a higher-dimensional space for linear separation.", "It does not use any kernel function.", "It only works for binary classification."], answer: 1, exp: "الـ Non-linear SVM يستخدم Kernel لرفع البيانات لأبعاد أعلى لفصلها خطياً." },
+                    { q: "17) What does the term 'overfitting' refer to in machine learning?", options: ["The model performs well on unseen data", "The model is too simple to capture the underlying data pattern", "The model learns noise from the training data", "The model fails to converge"], answer: 2, exp: "الـ Overfitting يعني أن الموديل حفظ الضوضاء والتفاصيل العشوائية في بيانات التدريب." },
+                    { q: "18) In supervised learning, what type of data is used for training?", options: ["Unlabeled data", "Labeled data", "Semi-labeled data", "Raw data"], answer: 1, exp: "التعلم الخاضع للإشراف يعتمد أساساً على بيانات مصنفة ومعروفة الإجابات (Labeled data)." },
+                    { q: "19) Which evaluation metric measures how well independent variables explain the variance in the dependent variable?", options: ["MSE (Mean Squared Error)", "R-squared (R²)", "Cross-Entropy Loss", "Precision"], answer: 1, exp: "معامل التحديد R-squared يقيس نسبة التباين في المخرجات التي يفسرها الموديل." },
+                    { q: "20) What is the main goal of an SVM?", options: ["To create clusters in data", "To design a hyperplane that classifies data into two classes with maximum margin", "To apply linear regression on non-linear data", "To minimize the number of support vectors"], answer: 1, exp: "هدف الـ SVM هو إيجاد مستوى فاصل (Hyperplane) يفصل بين الفئات بأكبر هامش أمان (Maximum margin)." },
+                    { q: "21) What type of problem is logistic regression used for?", options: ["Regression problem", "Classification problem", "Clustering problem", "Dimensionality reduction"], answer: 1, exp: "رغم اسمها، تُستخدم الـ Logistic Regression في مسائل التصنيف (Classification)." },
+                    { q: "22) What is the primary goal of machine learning?", options: ["To develop fixed programs", "To enable computers to learn from data", "To replace human intelligence", "To store large amounts of data"], answer: 1, exp: "الهدف الأساسي لتعلم الآلة هو تمكين أجهزة الكمبيوتر من التعلم من البيانات بدون برمجة صريحة." },
+                    { q: "23) Which of the following is NOT a common type of kernel used in SVMs?", options: ["Linear kernel", "Polynomial kernel", "Convolutional kernel", "Radial basis function (RBF) kernel"], answer: 2, exp: "الـ Convolutional يُستخدم في الشبكات العصبية للصور، وليس Kernel شائعاً في SVM." },
+                    { q: "24) What is the primary difference between classification and clustering?", options: ["Classification requires labeled data, while clustering does not", "Classification is unsupervised, and clustering is supervised", "Classification uses distances, while clustering uses probabilities", "Both are unsupervised learning methods"], answer: 0, exp: "الـ Classification تعلم خاضع للإشراف يحتاج Labeled data، بينما الـ Clustering غير خاضع للإشراف بدون Labels." },
+                    { q: "25) In which regression technique can some coefficients be reduced to zero, effectively performing feature selection?", options: ["Ridge Regression", "Lasso Regression", "Polynomial Regression", "Support Vector Regression (SVR)"], answer: 1, exp: "الـ Lasso Regression (L1) يصفر أوزان الخصائص غير المهمة تماماً فيقوم بعمل Feature selection." },
+                    { q: "26) Which concept helps reduce variance in a model's performance?", options: ["Overfitting", "Cross-validation", "High learning rate", "Regularization"], answer: 3, exp: "الـ Regularization يضيف غرامة للأوزان الكبيرة لتقليل تعقيد الموديل وتقليل الـ Variance (منع الـ Overfitting)." },
+                    { q: "27) What does the Maximum Likelihood Estimation (MLE) technique in logistic regression aim to do?", options: ["Minimize the likelihood function", "Maximize the likelihood function", "Minimize the cost function", "Maximize the gradient"], answer: 1, exp: "تقنية MLE في الـ Logistic Regression تهدف إلى تعظيم دالة الاحتمال (Maximize the likelihood function)." },
+                    { q: "28) Which of the following is a common assumption in linear regression?", options: ["The relationship between variables is non-linear", "The observations are independent", "The residuals have increasing variance", "The target variable is categorical"], answer: 1, exp: "استقلالية المشاهدات (Independence of observations) من الافتراضات الأربعة الأساسية للـ Linear Regression." },
+                    { q: "29) Which term refers to dividing a dataset into subsets for testing and validation?", options: ["Regularization", "Data Splitting", "Data Augmentation", "Model Evaluation"], answer: 1, exp: "تقسيم البيانات إلى تدريب واختبار وتحقق يُسمى Data Splitting." },
+                    { q: "30) In logistic regression, what is the relationship between the probability p and the odds?", options: ["Odds = p / (1 - p)", "Odds = p + 1 - p", "Odds = p²", "Odds = 1 - p"], answer: 0, exp: "الـ Odds هي نسبة احتمال الحدوث p إلى احتمال عدم الحدوث (1-p)، أي p/(1-p)." },
+                    { q: "31) What does Ridge Regression (L2 Regularization) add to the cost function?", options: ["Penalty for large coefficients", "Penalty for small coefficients", "Penalty for high errors", "Penalty for using too many features"], answer: 0, exp: "الـ Ridge يضيف غرامة على المعاملات والأوزان الكبيرة (Penalty for large coefficients)." },
+                    { q: "32) Which of the following is an example of unsupervised learning?", options: ["Logistic Regression", "Decision Trees", "K-means Clustering", "Support Vector Machines"], answer: 2, exp: "خوارزمية K-means Clustering هي مثال صريح للتعلم غير الخاضع للإشراف." },
+                    { q: "33) Which of the following is NOT an evaluation metric for classification problems?", options: ["Precision", "Recall", "Mean Squared Error (MSE)", "F1-Score"], answer: 2, exp: "الـ MSE مقياس لمسائل الـ Regression وليس الـ Classification." },
+                    { q: "34) In reinforcement learning, how does an agent learn?", options: ["By using labeled datasets", "By receiving feedback from the environment", "By clustering similar data points", "By applying linear transformations"], answer: 1, exp: "في التعلم المعزز، يتعلم الـ Agent عن طريق التفاعل واستقبال مكافآت أو عقوبات (Feedback) من البيئة." },
+                    { q: "35) Which algorithm is commonly used for classification tasks?", options: ["Linear Regression", "K-means Clustering", "Decision Trees", "Principal Component Analysis (PCA)"], answer: 2, exp: "الـ Decision Trees تُستخدم في مهام التصنيف، بينما Linear للتوقع الرقمي، و K-means/PCA غير خاضعين للإشراف." },
+                    { q: "36) What is the primary difference between classification and regression problems?", options: ["Regression predicts continuous values, and classification predicts discrete values", "Regression uses the sigmoid function, and classification uses linear functions", "Classification problems are more complex than regression problems", "Classification predicts numerical values"], answer: 0, exp: "الـ Regression يتوقع قيم مستمرة (Continuous)، والـ Classification يتوقع فئات منفصلة (Discrete)." },
+                    { q: "37) Which term refers to a model that is too simple and fails to capture the data patterns?", options: ["Overfitting", "Underfitting", "Cross-validation", "Stratified sampling"], answer: 1, exp: "الموديل البسيط زيادة عن اللزوم الذي يفشل في فهم نمط البيانات يُسمى Underfitting." },
+                    { q: "38) In an SVM, what are the points closest to the separating hyperplane called?", options: ["Hyperpoints", "Boundary points", "Support vectors", "Decision points"], answer: 2, exp: "النقاط الأقرب للمستوى الفاصل في SVM تُسمى Support vectors." },
+                    { q: "39) In logistic regression, if the hypothesis output hθ(x) is greater than 0.5, what is the predicted class?", options: ["0", "1", "any number", "2"], answer: 1, exp: "إذا كانت الاحتمالية أكبر من أو تساوي 0.5 يتم تصنيف المخرج كفئة 1، وأقل من 0.5 كفئة 0." },
+                    { q: "40) What is the primary goal of regression in machine learning?", options: ["Classify input data", "Predict continuous numerical values", "Group similar data points", "Reduce the number of features"], answer: 1, exp: "الهدف الأساسي للـ Regression هو توقع قيم رقمية مستمرة." },
+                    { q: "41) The formula used to minimize the sum of squared errors between actual and predicted values in linear regression is:", options: ["Mean Squared Error (MSE)", "Cross-Entropy Loss", "Hinge Loss", "Regularization Term"], answer: 0, exp: "دالة التكلفة في الانحدار الخطي تعتمد على تقليل متوسط مربعات الأخطاء (MSE)." },
+                    { q: "42) In supervised learning, which type of problem involves predicting a continuous output?", options: ["Classification", "Clustering", "Regression", "Reinforcement learning"], answer: 2, exp: "مسائل الـ Regression هي المسؤولة عن توقع مخرجات مستمرة (Continuous output)." },
+                    { q: "43) In logistic regression, which of the following terms represents the transformation of probability to log-odds?", options: ["Hypothesis function", "Sigmoid function", "Logit function", "Decision boundary"], answer: 2, exp: "دالة الـ Logit هي التي تحول الاحتمالية p إلى Log-odds." },
+                    { q: "44) The optimization problem in an SVM aims to maximize:", options: ["The distance between the support vectors", "The margin between the classes", "The distance between all data points and the hyperplane", "The number of data points on the margin"], answer: 1, exp: "الـ SVM يهدف لتعظيم الهامش (Margin) الفاصل بين الفئات." },
+                    { q: "45) Unsupervised learning algorithms always provide a labeled output.", options: ["True", "False"], answer: 1, exp: "خطأ (False)؛ الـ Unsupervised learning يتعامل مع بيانات غير مصنفة ولا يخرج Labeled output." },
+                    { q: "46) Machine learning can only be applied to numerical data.", options: ["True", "False"], answer: 1, exp: "خطأ (False)؛ يُطبق على النصوص والصور والصوت والفيديو بجانب البيانات الرقمية." },
+                    { q: "47) Ridge regression can shrink some coefficients to exactly zero.", options: ["True", "False"], answer: 1, exp: "خطأ (False)؛ الـ Ridge يصغر الأوزان قريباً من الصفر لكن لا يصفرها تماماً (الـ Lasso هو الذي يصفرها)." },
+                    { q: "48) The radial basis function (RBF) kernel maps data to an infinite-dimensional space.", options: ["True", "False"], answer: 0, exp: "صح (True)؛ الـ RBF kernel يرفع البيانات إلى فضاء لا نهائي الأبعاد (Infinite-dimensional space)." },
+                    { q: "49) Gradient descent minimizes a cost function during model training.", options: ["True", "False"], answer: 0, exp: "صح (True)؛ الـ Gradient descent يقوم بتحديث الأوزان لتقليل دالة التكلفة (Cost function)." },
+                    { q: "50) The performance of a machine learning model can be evaluated using metrics such as precision and recall.", options: ["True", "False"], answer: 0, exp: "صح (True)؛ الـ Precision والـ Recall من أهم مقاييس تقييم موديلات التصنيف." },
+                    { q: "51) The hypothesis output in logistic regression represents the estimated probability that the class is 1.", options: ["True", "False"], answer: 0, exp: "صح (True)؛ قيمة hθ(x) تعبر عن الاحتمال المقدر بأن المدخل ينتمي للفئة 1." },
+                    { q: "52) Models trained with biased data can still be considered fair and reliable.", options: ["True", "False"], answer: 1, exp: "خطأ (False)؛ البيانات المتحيزة تنتج موديلات متحيزة وغير عادلة." },
+                    { q: "53) The kernel trick allows SVM to perform non-linear classification in the original feature space.", options: ["True", "False"], answer: 1, exp: "خطأ (False)؛ الـ Kernel trick يقوم بالفصل الخطي في فضاء ذي أبعاد أعلى (Higher-dimensional space) وليس الفضاء الأصلي." },
+                    { q: "54) Polynomial regression is more prone to overfitting than linear regression.", options: ["True", "False"], answer: 0, exp: "صح (True)؛ زيادة درجة الأس في Polynomial regression تزيد تعقيد الموديل وتجعله أكثر عرضة للـ Overfitting." },
+                    { q: "55) Logistic regression can be considered a type of probabilistic model.", options: ["True", "False"], answer: 0, exp: "صح (True)؛ لأنها تخرج احتمالات (Probabilities) بين 0 و 1 باستخدام دالة Sigmoid." },
+                    { q: "56) The purpose of model validation is to reduce overfitting.", options: ["True", "False"], answer: 0, exp: "صح (True)؛ التحقق من الموديل يساعد في ضبط الإعدادات واكتشاف الـ Overfitting مبكراً." },
+                    { q: "57) Logistic regression can be used to predict continuous numerical values.", options: ["True", "False"], answer: 1, exp: "خطأ (False)؛ تُستخدم للتصنيف (Discrete classes) وليس لتوقع أرقام مستمرة." },
+                    { q: "58) Elastic Net regression performs well with datasets that contain multiple correlated features.", options: ["True", "False"], answer: 0, exp: "صح (True)؛ لدمجه بين Ridge و Lasso فهو يتعامل بكفاءة عالية مع الخصائص المترابطة (Multicollinearity)." },
+                    { q: "59) SVM is an example of a supervised learning algorithm.", options: ["True", "False"], answer: 0, exp: "صح (True)؛ الـ SVM خوارزمية تعلم خاضع للإشراف." },
+                    { q: "60) A polynomial kernel is a common type of kernel used in SVM.", options: ["True", "False"], answer: 0, exp: "صح (True)؛ الـ Linear والـ Polynomial والـ RBF من أشهر الـ Kernels في SVM." },
+                    { q: "61) Machine learning is a subset of artificial intelligence.", options: ["True", "False"], answer: 0, exp: "صح (True)؛ تعلم الآلة هو فرع أساسي من الذكاء الاصطناعي (AI)." },
+                    { q: "62) Linear regression can be used for both classification and regression problems.", options: ["True", "False"], answer: 1, exp: "خطأ (False)؛ الـ Linear regression يُستخدم لمسائل الـ Regression فقط." }
+                ]
+            },
+            exam2: {
+                title: "Predicted Exam - Doctor's Style (30 Questions)",
+                questions: [
+                    { q: "1) In logistic regression, if the hypothesis output hθ(x) is less than 0.5, what is the predicted class?", options: ["1", "0", "-1", "Undefined"], answer: 1, exp: "عكس سؤال الميدتيرم؛ لو المخرج أقل من 0.5 يكون التصنيف المتوقع هو الفئة 0." },
+                    { q: "2) Which regression technique adds an L1 penalty (sum of absolute values of coefficients) to the cost function?", options: ["Ridge Regression", "Polynomial Regression", "Lasso Regression", "Ordinary Least Squares (OLS)"], answer: 2, exp: "الـ Lasso Regression يضيف غرامة L1 (القيمة المطلقة للأوزان) والتي تساعد في تصفير الخصائص غير المهمة." },
+                    { q: "3) In linear regression, what does the assumption of 'Homoscedasticity' refer to?", options: ["The observations are independent of each other", "The variance of residual errors is constant across all levels of input features", "The relationship between input and target variables is non-linear", "The features are highly correlated with each other"], answer: 1, exp: "الـ Homoscedasticity تعني ثبات تباين الأخطاء (Residuals) عبر جميع قيم المدخلات." },
+                    { q: "4) Which evaluation metric is the harmonic mean of Precision and Recall, making it ideal for imbalanced classification datasets?", options: ["R-squared (R²)", "Mean Absolute Error (MAE)", "F1-Score", "Accuracy"], answer: 2, exp: "الـ F1-Score هو المتوسط التوافقي بين الـ Precision والـ Recall." },
+                    { q: "5) What happens during Gradient Descent if the learning rate (α) is set too large?", options: ["The algorithm will converge very slowly", "The algorithm may overshoot the minimum and fail to converge", "The model will automatically perform feature selection", "The cost function will immediately become zero"], answer: 1, exp: "إذا كان معدل التعلم α كبيراً جداً، ستقفز الخوارزمية فوق القاع (Overshoot the minimum) وقد تفشل في الاستقرار." },
+                    { q: "6) Which machine learning paradigm is best suited for a scenario where a small portion of data is labeled and a large portion is unlabeled?", options: ["Supervised Learning", "Unsupervised Learning", "Semi-supervised Learning", "Reinforcement Learning"], answer: 2, exp: "الـ Semi-supervised learning يجمع بين جزء صغير من البيانات المصنفة وجزء كبير غير مصنف." },
+                    { q: "7) According to the Bias-Variance Trade-off, a model that suffers from underfitting typically has:", options: ["High Bias and Low Variance", "Low Bias and High Variance", "High Bias and High Variance", "Low Bias and Low Variance"], answer: 0, exp: "الـ Underfitting يرتبط دائماً بـ High Bias، بينما الـ Overfitting يرتبط بـ High Variance." },
+                    { q: "8) Which algorithm is an unsupervised dimensionality reduction technique?", options: ["Support Vector Machines (SVM)", "Logistic Regression", "Principal Component Analysis (PCA)", "Random Forest"], answer: 2, exp: "الـ PCA هي أشهر خوارزمية لتقليل الأبعاد (Dimensionality Reduction) في التعلم غير الخاضع للإشراف." },
+                    { q: "9) In Support Vector Regression (SVR), what is the role of the ε (epsilon) parameter?", options: ["It defines a margin of tolerance where errors are not penalized", "It maps the data into an infinite-dimensional space", "It shrinks irrelevant feature weights to zero", "It calculates the probability of binary classes"], answer: 0, exp: "معامل ε في SVR يحدد أنبوبة أو هامش تسامح لا يتم حساب غرامة للأخطاء داخله." },
+                    { q: "10) Which of the following is an ensemble learning method that averages predictions from multiple decision trees to reduce overfitting?", options: ["Naive Bayes", "Random Forest", "k-Nearest Neighbors (k-NN)", "Elastic Net"], answer: 1, exp: "الـ Random Forest يبني عدة أشجار قرارات ويأخذ متوسط توقعاتها لتقليل الـ Overfitting." },
+                    { q: "11) In a tabular dataset, the individual measurable properties or columns used as inputs to a model are called:", options: ["Labels", "Targets", "Features (or Attributes)", "Residuals"], answer: 2, exp: "الأعمدة المدخلة التي توصف البيانات تُسمى Features أو Attributes، بينما المخرج يُسمى Label." },
+                    { q: "12) Which dataset in the machine learning workflow is used ONLY for the final, unbiased evaluation of a fully trained model on unseen data?", options: ["Training data", "Validation data", "Test data", "Augmented data"], answer: 2, exp: "الـ Test data تُستخدم في التقييم النهائي لأداء الموديل على بيانات لم يرها من قبل." },
+                    { q: "13) Which regression evaluation metric penalizes larger errors more heavily by squaring the differences between actual and predicted values?", options: ["Mean Absolute Error (MAE)", "R-squared (R²)", "Mean Squared Error (MSE)", "Recall"], answer: 2, exp: "الـ MSE يربع الفروق ولذلك يعاقب الأخطاء الكبيرة بقوة أكبر من الـ MAE." },
+                    { q: "14) According to Tom Mitchell's definition of Machine Learning, if an email filter improves its accuracy (P) at identifying spam (T) after processing thousands of labeled emails, those historical emails represent:", options: ["Task (T)", "Performance Measure (P)", "Experience (E)", "Hyperparameters"], answer: 2, exp: "البيانات والتجارب السابقة التي يتعلم منها البرنامج تمثل الخبرة Experience (E)." },
+                    { q: "15) In the k-Nearest Neighbors (k-NN) algorithm, choosing a very small value for k (such as k = 1) makes the model:", options: ["Too simple and prone to underfitting", "Highly sensitive to noise and prone to overfitting", "Equivalent to K-means clustering", "Only capable of solving regression tasks"], answer: 1, exp: "اختيار k صغيرة جداً يجعل الموديل حساساً للشوائب (Noise) وعرضة للـ Overfitting." },
+                    { q: "16) What is the mathematical range of the output produced by the Sigmoid function in logistic regression?", options: ["-∞ to +∞", "-1 to 1", "0 to 1", "0 to ∞"], answer: 2, exp: "دالة الـ Sigmoid تخرج قيماً احتمالية محصورة دائماً بين 0 و 1." },
+                    { q: "17) Which problem occurs when independent variables in a multiple linear regression model are highly correlated with each other, and is effectively handled by Ridge Regression?", options: ["Homoscedasticity", "Multicollinearity", "Clustering", "Transcription"], answer: 1, exp: "مشكلة الارتباط العالي بين المدخلات تُسمى Multicollinearity ويعالجها الـ Ridge Regression بكفاءة." },
+                    { q: "18) In logistic regression, if the probability p of an event occurring is 0.8, what are the Odds of that event?", options: ["0.2", "0.8", "4", "0.64"], answer: 2, exp: "بتطبيق قانون Odds = p / (1 - p) = 0.8 / (1 - 0.8) = 0.8 / 0.2 = 4." },
+                    { q: "19) During which step of the Machine Learning pipeline are missing values handled and categorical variables encoded?", options: ["Problem Definition", "Data Preprocessing", "Model Deployment", "Model Selection"], answer: 1, exp: "تنظيف البيانات ومعالجة القيم المفقودة وتحويل الفئات لأرقام يتم في مرحلة الـ Data Preprocessing." },
+                    { q: "20) Which of the following is an example of an unsupervised clustering task?", options: ["Predicting tomorrow's temperature", "Grouping retail customers into segments based on purchasing behavior", "Translating English text into Arabic", "Detecting fraudulent credit card transactions using labeled history"], answer: 1, exp: "تقسيم العملاء إلى شرائح متشابهة بدون تسميات مسبقة هو مثال كلاسيكي للـ Clustering." },
+                    { q: "21) Lasso regression (L1 regularization) can shrink some coefficients to exactly zero.", options: ["True", "False"], answer: 0, exp: "صح (True)؛ الـ Lasso (عكس الـ Ridge) يستطيع تصفير بعض المعاملات تماماً (Exactly zero)." },
+                    { q: "22) A model that suffers from overfitting performs well on training data but poorly on unseen test data.", options: ["True", "False"], answer: 0, exp: "صح (True)؛ هذا هو التعريف الدقيق لمشكلة الـ Overfitting." },
+                    { q: "23) K-means clustering is a supervised learning algorithm used for regression.", options: ["True", "False"], answer: 1, exp: "خطأ (False)؛ الـ K-means هي خوارزمية Unsupervised تُستخدم في التجميع (Clustering)." },
+                    { q: "24) Increasing the degree of a polynomial regression model always improves its generalization on unseen test data.", options: ["True", "False"], answer: 1, exp: "خطأ (False)؛ زيادة درجة الأس بشكل مفرط تؤدي إلى Overfitting وتدهور الأداء على البيانات الجديدة." },
+                    { q: "25) Decision Trees can be used for both classification and regression tasks.", options: ["True", "False"], answer: 0, exp: "صح (True)؛ أشجار القرارات تعمل في التصنيف (Classification) والتوقع الرقمي (Regression)." },
+                    { q: "26) In Linear Regression, the Ordinary Least Squares (OLS) method aims to maximize the sum of squared residuals.", options: ["True", "False"], answer: 1, exp: "خطأ (False)؛ طريقة OLS تهدف إلى تقليل (Minimize) مجموع مربعات الأخطاء وليس تعظيمه." },
+                    { q: "27) Support Vector Machines (SVM) are effective in high-dimensional spaces where the number of features is large.", options: ["True", "False"], answer: 0, exp: "صح (True)؛ من أهم مميزات الـ SVM كفاءته العالية في المساحات ذات الأبعاد الكبيرة (High-dimensional spaces)." },
+                    { q: "28) High variance in a machine learning model is closely associated with overfitting.", options: ["True", "False"], answer: 0, exp: "صح (True)؛ الـ High Variance يعني حساسية مفرطة لبيانات التدريب وهو ما يسبب الـ Overfitting." },
+                    { q: "29) In Reinforcement Learning, the agent learns from a pre-labeled dataset provided by a supervisor.", options: ["True", "False"], answer: 1, exp: "خطأ (False)؛ الـ Agent يتعلم من التفاعل مع البيئة عن طريق الثواب والعقاب وليس من بيانات مصنفة." },
+                    { q: "30) The Sigmoid function maps any real-valued number into a value between 0 and 1.", options: ["True", "False"], answer: 0, exp: "صح (True)؛ دالة Sigmoid تحول أي رقم حقيقي إلى قيمة بين 0 و 1 لتمثيل الاحتمالية." }
+                ]
+            }
+        };
+
+        // ==========================================
+        // APPLICATION STATE
+        // ==========================================
+        let currentExamKey = 'exam1';
+        let currentMode = 'practice'; // 'practice' or 'real'
+        let currentIndex = 0;
+
+        // Separate state per exam so switching tabs preserves user progress
+        const userState = {
+            exam1: { answers: {}, flagged: {}, elapsedSeconds: 0 },
+            exam2: { answers: {}, flagged: {}, elapsedSeconds: 0 }
+        };
+
+        let timerInterval = null;
+        let currentReviewFilter = 'all';
+
+        // ==========================================
+        // INITIALIZATION & TIMER
+        // ==========================================
+        window.onload = function () {
+            startTimer();
+            renderAll();
+        };
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                userState[currentExamKey].elapsedSeconds++;
+                updateTimerUI();
+            }, 1000);
+        }
+
+        function updateTimerUI() {
+            const secs = userState[currentExamKey].elapsedSeconds;
+            const mins = Math.floor(secs / 60).toString().padStart(2, '0');
+            const remSecs = (secs % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').textContent = `${mins}:${remSecs}`;
+        }
+
+        // ==========================================
+        // NAVIGATION & SWITCHERS
+        // ==========================================
+        function switchExam(examKey) {
+            currentExamKey = examKey;
+            currentIndex = 0;
+
+            // Update tab styles
+            const tab1 = document.getElementById('tab-exam1');
+            const tab2 = document.getElementById('tab-exam2');
+            if (examKey === 'exam1') {
+                tab1.className = "px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all bg-blue-600 text-white shadow-sm";
+                tab2.className = "px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-600 hover:text-slate-900";
+            } else {
+                tab2.className = "px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all bg-blue-600 text-white shadow-sm";
+                tab1.className = "px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-600 hover:text-slate-900";
+            }
+
+            returnToQuestions();
+            updateTimerUI();
+            renderAll();
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            const btnPractice = document.getElementById('mode-practice');
+            const btnReal = document.getElementById('mode-real');
+
+            if (mode === 'practice') {
+                btnPractice.className = "px-2.5 py-1 rounded-md bg-emerald-600 text-white shadow-sm transition-all flex items-center gap-1";
+                btnReal.className = "px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1";
+            } else {
+                btnReal.className = "px-2.5 py-1 rounded-md bg-blue-600 text-white shadow-sm transition-all flex items-center gap-1";
+                btnPractice.className = "px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1";
+            }
+
+            renderAll();
+        }
+
+        function goToQuestion(idx) {
+            const total = examData[currentExamKey].questions.length;
+            if (idx >= 0 && idx < total) {
+                currentIndex = idx;
+                renderAll();
+            }
+        }
+
+        function nextQuestion() {
+            const total = examData[currentExamKey].questions.length;
+            if (currentIndex < total - 1) {
+                currentIndex++;
+                renderAll();
+            } else {
+                openSubmitModal();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderAll();
+            }
+        }
+
+        function toggleFlagCurrent() {
+            const flaggedMap = userState[currentExamKey].flagged;
+            flaggedMap[currentIndex] = !flaggedMap[currentIndex];
+            renderAll();
+        }
+
+        // ==========================================
+        // CORE RENDERING
+        // ==========================================
+        function renderAll() {
+            const exam = examData[currentExamKey];
+            const questions = exam.questions;
+            const total = questions.length;
+            const qObj = questions[currentIndex];
+            const state = userState[currentExamKey];
+            const selectedAnswer = state.answers[currentIndex];
+
+            // Header & Progress Info
+            document.getElementById('exam-title-badge').textContent = exam.title;
+            document.getElementById('question-counter-text').textContent = `Question ${currentIndex + 1} of ${total}`;
+
+            const answeredCount = Object.keys(state.answers).length;
+            if (currentMode === 'practice') {
+                let correctSoFar = 0;
+                for (const [qIdx, ansIdx] of Object.entries(state.answers)) {
+                    if (questions[qIdx].answer === ansIdx) correctSoFar++;
+                }
+                document.getElementById('live-score-pill').textContent = `تم الحل: ${answeredCount} / ${total} (صح: ${correctSoFar})`;
+            } else {
+                document.getElementById('live-score-pill').textContent = `تمت الإجابة: ${answeredCount} / ${total}`;
+            }
+
+            const progressPct = Math.max(2, Math.round(((currentIndex + 1) / total) * 100));
+            document.getElementById('progress-bar-fill').style.width = `${progressPct}%`;
+
+            // Question Text
+            document.getElementById('question-text').textContent = qObj.q;
+
+            // Flag Button State
+            const flagBtn = document.getElementById('flag-btn');
+            if (state.flagged[currentIndex]) {
+                flagBtn.className = "shrink-0 px-3 py-1.5 rounded-lg border border-amber-400 bg-amber-50 text-xs font-bold text-amber-700 transition-all flex items-center gap-1.5";
+                flagBtn.innerHTML = `<i class="fa-solid fa-flag"></i><span class="hidden sm:inline">معلم للمراجعة</span>`;
+            } else {
+                flagBtn.className = "shrink-0 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-500 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-300 transition-all flex items-center gap-1.5";
+                flagBtn.innerHTML = `<i class="fa-regular fa-flag"></i><span class="hidden sm:inline">مراجعة</span>`;
+            }
+
+            // Options Rendering (University Portal Box Style)
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            qObj.options.forEach((optText, optIdx) => {
+                const isSelected = selectedAnswer === optIdx;
+                const isCorrectOption = qObj.answer === optIdx;
+
+                let rowClasses = "option-row w-full border rounded-lg p-3.5 sm:p-4 flex items-center justify-between cursor-pointer text-left en-text ";
+                let radioClasses = "w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ml-3 ";
+                let badgeHTML = "";
+
+                if (selectedAnswer !== undefined && currentMode === 'practice') {
+                    // Instant Feedback coloring in Practice Mode
+                    if (isCorrectOption) {
+                        rowClasses += "bg-emerald-50 border-emerald-500 text-emerald-950 font-semibold";
+                        radioClasses += "border-emerald-600 bg-emerald-600 text-white";
+                        badgeHTML = `<span class="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded ml-2"><i class="fa-solid fa-check"></i> Correct</span>`;
+                    } else if (isSelected && !isCorrectOption) {
+                        rowClasses += "bg-rose-50 border-rose-500 text-rose-950 font-semibold";
+                        radioClasses += "border-rose-600 bg-rose-600 text-white";
+                        badgeHTML = `<span class="text-xs font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded ml-2"><i class="fa-solid fa-xmark"></i> Your Answer</span>`;
+                    } else {
+                        rowClasses += "bg-white border-slate-300 text-slate-600 opacity-75";
+                        radioClasses += "border-slate-400 bg-white";
+                    }
+                } else {
+                    // Real Exam Mode or Unanswered Practice Mode
+                    if (isSelected) {
+                        rowClasses += "bg-blue-50 border-blue-600 text-blue-950 font-semibold shadow-2xs";
+                        radioClasses += "border-blue-600 bg-blue-600";
+                    } else {
+                        rowClasses += "bg-white border-slate-300 text-slate-800";
+                        radioClasses += "border-slate-400 bg-white";
+                    }
+                }
+
+                const optionDiv = document.createElement('div');
+                optionDiv.className = rowClasses;
+                optionDiv.onclick = () => selectOption(optIdx);
+
+                optionDiv.innerHTML = `
+                    <div class="flex items-center flex-grow pr-2">
+                        <span class="text-sm sm:text-base leading-snug">${optText}</span>
+                        ${badgeHTML}
+                    </div>
+                    <div class="${radioClasses}">
+                        ${isSelected ? '<span class="w-1.5 h-1.5 rounded-full bg-white"></span>' : ''}
+                    </div>
+                `;
+                optionsContainer.appendChild(optionDiv);
+            });
+
+            // Explanation Box (Practice Mode Only)
+            const expBox = document.getElementById('explanation-box');
+            if (currentMode === 'practice' && selectedAnswer !== undefined) {
+                const isCorrect = selectedAnswer === qObj.answer;
+                expBox.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-300', 'bg-rose-50', 'border-rose-300');
+                const expIcon = document.getElementById('explanation-icon');
+                const expStatus = document.getElementById('explanation-status');
+
+                if (isCorrect) {
+                    expBox.classList.add('bg-emerald-50', 'border-emerald-300');
+                    expIcon.className = "fa-solid fa-circle-check mt-1 text-lg text-emerald-600";
+                    expStatus.className = "font-bold mb-1 text-emerald-800";
+                    expStatus.textContent = "إجابة صحيحة! ممتاز";
+                } else {
+                    expBox.classList.add('bg-rose-50', 'border-rose-300');
+                    expIcon.className = "fa-solid fa-circle-xmark mt-1 text-lg text-rose-600";
+                    expStatus.className = "font-bold mb-1 text-rose-800";
+                    expStatus.textContent = `إجابة خاطئة — الإجابة الصحيحة هي: ${qObj.options[qObj.answer]}`;
+                }
+                document.getElementById('explanation-text').textContent = qObj.exp;
+            } else {
+                expBox.classList.add('hidden');
+            }
+
+            // Prev / Next Button States
+            document.getElementById('prev-btn').disabled = currentIndex === 0;
+            const nextBtn = document.getElementById('next-btn');
+            if (currentIndex === total - 1) {
+                nextBtn.innerHTML = `<span>Finish</span><i class="fa-solid fa-flag-checkered text-xs"></i>`;
+            } else {
+                nextBtn.innerHTML = `<span>Next</span><i class="fa-solid fa-chevron-right text-xs"></i>`;
+            }
+
+            // Render Bottom Numbered Grid
+            renderQuestionGrid();
+        }
+
+        function selectOption(optIdx) {
+            userState[currentExamKey].answers[currentIndex] = optIdx;
+            renderAll();
+        }
+
+        function renderQuestionGrid() {
+            const grid = document.getElementById('question-grid');
+            grid.innerHTML = '';
+            const questions = examData[currentExamKey].questions;
+            const state = userState[currentExamKey];
+
+            questions.forEach((q, idx) => {
+                const isCurrent = idx === currentIndex;
+                const isAnswered = state.answers[idx] !== undefined;
+                const isFlagged = state.flagged[idx];
+
+                let btnClass = "w-8 h-8 sm:w-9 sm:h-9 rounded-md text-xs font-bold border transition-all flex items-center justify-center ";
+
+                if (isCurrent) {
+                    btnClass += "bg-blue-600 text-white border-blue-600 shadow-xs scale-105";
+                } else if (isFlagged) {
+                    btnClass += "bg-amber-100 text-amber-800 border-amber-400 hover:bg-amber-200";
+                } else if (isAnswered) {
+                    if (currentMode === 'practice') {
+                        const isRight = state.answers[idx] === q.answer;
+                        btnClass += isRight
+                            ? "bg-emerald-100 text-emerald-800 border-emerald-400 hover:bg-emerald-200"
+                            : "bg-rose-100 text-rose-800 border-rose-400 hover:bg-rose-200";
+                    } else {
+                        btnClass += "bg-emerald-100 text-emerald-800 border-emerald-400 hover:bg-emerald-200";
+                    }
+                } else {
+                    btnClass += "bg-white text-slate-700 border-slate-300 hover:bg-slate-100";
+                }
+
+                const btn = document.createElement('button');
+                btn.className = btnClass;
+                btn.textContent = idx + 1;
+                btn.onclick = () => goToQuestion(idx);
+                grid.appendChild(btn);
+            });
+        }
+
+        // ==========================================
+        // SUBMIT, RESULTS & REVIEW
+        // ==========================================
+        function openSubmitModal() {
+            const total = examData[currentExamKey].questions.length;
+            const answered = Object.keys(userState[currentExamKey].answers).length;
+            const unanswered = total - answered;
+
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            const confirmBtn = document.getElementById('modal-confirm-btn');
+
+            modalTitle.textContent = "تأكيد إنهاء وتصحيح الامتحان";
+            if (unanswered > 0) {
+                modalBody.textContent = `لقد أجبت على ${answered} من أصل ${total} سؤال. يتبقى لديك ${unanswered} سؤال بدون إجابة. هل تريد تسليم الامتحان وإظهار النتيجة النهائية؟`;
+            } else {
+                modalBody.textContent = `لقد أجبت على جميع الأسئلة (${total} سؤال). هل أنت مستعد لإظهار النتيجة النهائية ومراجعة الشرح؟`;
+            }
+
+            confirmBtn.onclick = () => {
+                closeModal();
+                showResultsView();
+            };
+
+            const overlay = document.getElementById('modal-overlay');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+
+        function resetCurrentExam() {
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            const confirmBtn = document.getElementById('modal-confirm-btn');
+
+            modalTitle.textContent = "إعادة ضبط الامتحان";
+            modalBody.textContent = "هل تريد مسح جميع إجاباتك في هذا الامتحان والبدء من السؤال الأول من جديد؟";
+
+            confirmBtn.onclick = () => {
+                userState[currentExamKey] = { answers: {}, flagged: {}, elapsedSeconds: 0 };
+                currentIndex = 0;
+                closeModal();
+                returnToQuestions();
+                updateTimerUI();
+                renderAll();
+            };
+
+            const overlay = document.getElementById('modal-overlay');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+
+        function closeModal() {
+            const overlay = document.getElementById('modal-overlay');
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+        }
+
+        function showResultsView() {
+            document.getElementById('exam-active-view').classList.add('hidden');
+            document.getElementById('exam-results-view').classList.remove('hidden');
+
+            const exam = examData[currentExamKey];
+            const questions = exam.questions;
+            const state = userState[currentExamKey];
+            const total = questions.length;
+
+            let correct = 0;
+            questions.forEach((q, idx) => {
+                if (state.answers[idx] === q.answer) correct++;
+            });
+
+            const wrong = total - correct;
+            const pct = Math.round((correct / total) * 100);
+
+            document.getElementById('result-exam-name').textContent = exam.title;
+            document.getElementById('res-score-fraction').textContent = `${correct} / ${total}`;
+            document.getElementById('res-correct-count').textContent = correct;
+            document.getElementById('res-wrong-count').textContent = wrong;
+            document.getElementById('res-percentage').textContent = `${pct}%`;
+
+            currentReviewFilter = 'all';
+            filterReview('all');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function returnToQuestions() {
+            document.getElementById('exam-results-view').classList.add('hidden');
+            document.getElementById('exam-active-view').classList.remove('hidden');
+        }
+
+        function filterReview(filterType) {
+            currentReviewFilter = filterType;
+            const btnAll = document.getElementById('filter-all');
+            const btnWrong = document.getElementById('filter-wrong');
+            const btnFlagged = document.getElementById('filter-flagged');
+
+            [btnAll, btnWrong, btnFlagged].forEach(b => {
+                b.className = "px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all";
+            });
+
+            if (filterType === 'all') btnAll.className = "px-3 py-1.5 rounded-lg bg-blue-600 text-white transition-all";
+            if (filterType === 'wrong') btnWrong.className = "px-3 py-1.5 rounded-lg bg-rose-600 text-white transition-all";
+            if (filterType === 'flagged') btnFlagged.className = "px-3 py-1.5 rounded-lg bg-amber-600 text-white transition-all";
+
+            const container = document.getElementById('review-cards-container');
+            container.innerHTML = '';
+
+            const questions = examData[currentExamKey].questions;
+            const state = userState[currentExamKey];
+
+            let shownCount = 0;
+
+            questions.forEach((q, idx) => {
+                const userAns = state.answers[idx];
+                const isCorrect = userAns === q.answer;
+                const isFlagged = !!state.flagged[idx];
+
+                if (filterType === 'wrong' && isCorrect) return;
+                if (filterType === 'flagged' && !isFlagged) return;
+
+                shownCount++;
+
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-xl shadow-xs border p-5 ${isCorrect ? 'border-emerald-200' : 'border-rose-300'}`;
+
+                const userAnsText = userAns !== undefined ? q.options[userAns] : "لم تتم الإجابة (Unanswered)";
+                const correctAnsText = q.options[q.answer];
+
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-3 mb-3">
+                        <h4 class="en-text font-bold text-slate-900 text-sm sm:text-base">${q.q}</h4>
+                        <span class="shrink-0 px-2.5 py-1 rounded-full text-xs font-bold ${isCorrect ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                            ${isCorrect ? 'إجابة صحيحة' : 'إجابة خاطئة'}
+                        </span>
+                    </div>
+                    <div class="space-y-1.5 text-xs sm:text-sm mb-3 en-text">
+                        <div class="${isCorrect ? 'text-emerald-700 font-semibold' : 'text-rose-700 font-semibold'}">
+                            Your Answer: ${userAnsText}
+                        </div>
+                        ${!isCorrect ? `<div class="text-emerald-700 font-bold">Correct Answer: ${correctAnsText}</div>` : ''}
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs sm:text-sm text-slate-700">
+                        <span class="font-bold text-slate-900">الشرح: </span>${q.exp}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            if (shownCount === 0) {
+                container.innerHTML = `
+                    <div class="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-500 font-semibold">
+                        لا توجد أسئلة مطابقة لهذا الفلتر! عاش يا بطل 🎉
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
