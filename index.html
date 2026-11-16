@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المنصة التعليمية الموحدة - ML & CV & Computer Architecture</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Cairo & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-main: #f1f5f9;
+            --bg-card: #ffffff;
+            --bg-subtle: #f8fafc;
+            --border-color: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #334155;
+            --text-muted: #64748b;
+        }
+
+        html.dark {
+            --bg-main: #0b1120;
+            --bg-card: #1e293b;
+            --bg-subtle: #0f172a;
+            --border-color: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            font-family: 'Cairo', 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            line-height: 1.75;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .ltr-text {
+            direction: ltr;
+            text-align: left;
+            font-family: 'Inter', 'Cairo', sans-serif;
+            unicode-bidi: isolate;
+        }
+
+        .en-badge {
+            display: inline-block;
+            direction: ltr;
+            unicode-bidi: embed;
+            font-family: 'Inter', sans-serif;
+            background-color: #eff6ff;
+            color: #1e40af;
+            font-size: 0.81rem;
+            font-weight: 600;
+            padding: 0.08rem 0.5rem;
+            border-radius: 0.375rem;
+            border: 1px solid #bfdbfe;
+            margin: 0.08rem 0.18rem;
+            line-height: 1.4;
+            vertical-align: baseline;
+        }
+        html.dark .en-badge {
+            background-color: rgba(30, 58, 138, 0.55);
+            color: #93c5fd;
+            border-color: rgba(96, 165, 250, 0.35);
+        }
+
+        html.dark .bg-white { background-color: #1e293b !important; }
+        html.dark .bg-slate-50, html.dark .bg-slate-100 { background-color: #0f172a !important; }
+        html.dark .bg-slate-200 { background-color: #334155 !important; }
+        html.dark .border-slate-100, html.dark .border-slate-200, html.dark .border-slate-300 { border-color: #334155 !important; }
+        html.dark .text-slate-900, html.dark .text-slate-800 { color: #f8fafc !important; }
+        html.dark .text-slate-700, html.dark .text-slate-600 { color: #cbd5e1 !important; }
+        html.dark .text-slate-500 { color: #94a3b8 !important; }
+        html.dark input, html.dark select { background-color: #0f172a !important; color: #f8fafc !important; border-color: #334155 !important; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- TOP HEADER -->
+    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-40 border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex flex-col gap-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-extrabold text-lg shadow-inner shrink-0">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-sm sm:text-base font-extrabold tracking-tight">المنصة التعليمية الموحدة للامتحانات</h1>
+                        <p id="subject-subtitle" class="text-[11px] sm:text-xs text-slate-300">Machine Learning (92) • Computer Vision (83) • Computer Architecture (54)</p>
+                    </div>
+                </div>
+
+                <!-- Subject Switcher -->
+                <div class="flex flex-wrap items-center bg-slate-800 p-1 rounded-xl border border-slate-700 gap-1">
+                    <button type="button" id="subj-ml-btn" onclick="switchSubject('ml')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-extrabold transition flex items-center gap-2 bg-blue-600 text-white shadow">
+                        <i class="fa-solid fa-brain"></i><span>Machine Learning (92)</span>
+                    </button>
+                    <button type="button" id="subj-cv-btn" onclick="switchSubject('cv')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-extrabold transition flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-700">
+                        <i class="fa-solid fa-eye"></i><span>Computer Vision (83)</span>
+                    </button>
+                    <button type="button" id="subj-ca-btn" onclick="switchSubject('ca')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-extrabold transition flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-700">
+                        <i class="fa-solid fa-microchip"></i><span>Computer Architecture (54)</span>
+                    </button>
+                </div>
+
+                <!-- Dark Mode Toggle -->
+                <button type="button" onclick="toggleDarkMode()" class="px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition flex items-center gap-1.5">
+                    <i id="theme-toggle-icon" class="fa-solid fa-sun text-amber-400"></i>
+                    <span id="theme-toggle-text">الوضع النهاري</span>
+                </button>
+            </div>
+
+            <!-- Sub-Tabs -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t border-slate-800/80">
+                <nav class="flex flex-wrap items-center gap-1.5">
+                    <button type="button" data-tab="review" onclick="switchTab('review')" class="sub-tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold bg-blue-600 text-white transition">
+                        ⚡ ملخص ليلة الامتحان (الزتونة)
+                    </button>
+                    <button type="button" data-tab="exam1" onclick="switchTab('exam1')" id="sub-tab-exam1" class="sub-tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition">
+                        📝 الميدتيرم والكويز (62 سؤال)
+                    </button>
+                    <button type="button" data-tab="exam2" onclick="switchTab('exam2')" id="sub-tab-exam2" class="sub-tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition">
+                        🎯 الامتحان المتوقع (30 سؤال)
+                    </button>
+                    <button type="button" data-tab="exam3" onclick="switchTab('exam3')" id="sub-tab-exam3" class="hidden sub-tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition">
+                        🔥 محاكاة الميدتيرم (20 سؤال)
+                    </button>
+                    <button type="button" data-tab="bank" onclick="switchTab('bank')" id="sub-tab-bank" class="sub-tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition">
+                        🔍 بنك الأسئلة الشامل والفلترة
+                    </button>
+                </nav>
+                <div class="text-xs font-bold text-slate-300">
+                    <span id="header-progress-badge" class="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-emerald-400">إجمالي المحلول: 0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-5">
+        <!-- VIEW: REVIEW (ML) -->
+        <section id="view-review-ml" class="space-y-6">
+            <div class="bg-gradient-to-l from-blue-900 via-indigo-900 to-slate-900 rounded-2xl p-6 text-white shadow-md">
+                <h2 class="text-xl font-extrabold">ملخص Machine Learning (الزتونة الشاملة)</h2>
+                <p class="text-xs text-blue-200 mt-1">اختر قسم الامتحانات بالأعلى لاختبار نفسك في الـ 92 سؤالاً.</p>
+            </div>
+        </section>
+
+        <!-- VIEW: REVIEW (CV) -->
+        <section id="view-review-cv" class="hidden space-y-6">
+            <div class="bg-gradient-to-l from-purple-900 via-indigo-900 to-slate-900 rounded-2xl p-6 text-white shadow-md">
+                <h2 class="text-xl font-extrabold">ملخص Computer Vision (الزتونة الشاملة)</h2>
+                <p class="text-xs text-purple-200 mt-1">راجع القوانين والمسائل واختبر نفسك عبر التبويبات.</p>
+            </div>
+        </section>
+
+        <!-- VIEW: REVIEW (CA) -->
+        <section id="view-review-ca" class="hidden space-y-6">
+            <div class="bg-gradient-to-l from-indigo-900 via-blue-900 to-slate-900 rounded-2xl p-6 text-white shadow-md">
+                <h2 class="text-xl font-extrabold">ملخص Computer Architecture (Morris Mano Ch.4 & Ch.5)</h2>
+                <p class="text-xs text-blue-200 mt-1">الكبسولات التأسيسية والمحاكي التفاعلي للبتات والإزاحة.</p>
+            </div>
+        </section>
+
+        <!-- VIEW: QUIZ SIMULATOR -->
+        <section id="view-quiz" class="hidden space-y-4">
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <span id="quiz-badge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800">اختبار تفاعلي</span>
+                    <h2 id="quiz-title" class="text-lg font-extrabold text-slate-900 mt-1">عنوان الاختبار</h2>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="resetCurrentQuiz()" class="px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs font-bold hover:bg-rose-100 transition">إعادة المحاولة</button>
+                </div>
+            </div>
+            <div id="quiz-container" class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                <!-- يتم حقن الأسئلة هنا ديناميكياً -->
+            </div>
+        </section>
+
+        <!-- VIEW: QUESTION BANK -->
+        <section id="view-bank" class="hidden space-y-4">
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+                <h2 id="bank-title" class="text-lg font-extrabold text-slate-900">بنك الأسئلة الشامل</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input type="text" id="bank-search-input" oninput="renderBankView()" placeholder="ابحث في نص السؤال أو الشرح..." class="px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold" />
+                    <select id="bank-topic-select" onchange="renderBankView()" class="px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold">
+                        <option value="all">كل الأسئلة</option>
+                    </select>
+                </div>
+            </div>
+            <div id="bank-list-container" class="space-y-3"></div>
+        </section>
+    </main>
+
+    <!-- JAVASCRIPT ENGINE -->
+    <script>
+        const state = {
+            subject: 'ml',
+            tab: 'review',
+            quizNum: 1,
+            isDarkMode: true,
+            answers: {},
+            flagged: {}
+        };
+
+        function toggleDarkMode() {
+            state.isDarkMode = !state.isDarkMode;
+            document.documentElement.classList.toggle('dark', state.isDarkMode);
+            document.getElementById('theme-toggle-icon').className = state.isDarkMode ? "fa-solid fa-sun text-amber-400" : "fa-solid fa-moon text-indigo-400";
+            document.getElementById('theme-toggle-text').textContent = state.isDarkMode ? "الوضع النهاري" : "الوضع الليلي";
+        }
+
+        function switchSubject(subj) {
+            state.subject = subj;
+            
+            document.getElementById('subj-ml-btn').className = subj === 'ml' ? "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-extrabold transition flex items-center gap-2 bg-blue-600 text-white shadow" : "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-extrabold transition flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-700";
+            document.getElementById('subj-cv-btn').className = subj === 'cv' ? "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-extrabold transition flex items-center gap-2 bg-blue-600 text-white shadow" : "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-extrabold transition flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-700";
+            document.getElementById('subj-ca-btn').className = subj === 'ca' ? "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-extrabold transition flex items-center gap-2 bg-blue-600 text-white shadow" : "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-extrabold transition flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-700";
+
+            const tabExam3 = document.getElementById('sub-tab-exam3');
+            if (subj === 'ca') {
+                tabExam3.classList.remove('hidden');
+            } else {
+                tabExam3.classList.add('hidden');
+                if (state.tab === 'exam3') state.tab = 'review';
+            }
+
+            switchTab(state.tab);
+        }
+
+        function switchTab(tabName) {
+            state.tab = tabName;
+
+            document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+                const isHidden = btn.classList.contains('hidden');
+                if (btn.dataset.tab === tabName) {
+                    btn.className = `${isHidden ? 'hidden ' : ''}sub-tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold bg-blue-600 text-white transition`;
+                } else {
+                    btn.className = `${isHidden ? 'hidden ' : ''}sub-tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition`;
+                }
+            });
+
+            document.getElementById('view-review-ml').classList.add('hidden');
+            document.getElementById('view-review-cv').classList.add('hidden');
+            document.getElementById('view-review-ca').classList.add('hidden');
+            document.getElementById('view-quiz').classList.add('hidden');
+            document.getElementById('view-bank').classList.add('hidden');
+
+            if (tabName === 'review') {
+                if (state.subject === 'ml') document.getElementById('view-review-ml').classList.remove('hidden');
+                else if (state.subject === 'cv') document.getElementById('view-review-cv').classList.remove('hidden');
+                else document.getElementById('view-review-ca').classList.remove('hidden');
+            } else if (tabName === 'exam1' || tabName === 'exam2' || tabName === 'exam3') {
+                state.quizNum = tabName === 'exam1' ? 1 : (tabName === 'exam2' ? 2 : 3);
+                document.getElementById('view-quiz').classList.remove('hidden');
+                renderQuizMock();
+            } else if (tabName === 'bank') {
+                document.getElementById('view-bank').classList.remove('hidden');
+                renderBankView();
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderQuizMock() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = `
+                <div class="space-y-4 text-center py-6">
+                    <p class="text-sm font-bold text-slate-600">أنت الآن في اختبار المادة: <span class="text-blue-600 uppercase">${state.subject}</span> - الكويز رقم <span class="text-indigo-600">${state.quizNum}</span></p>
+                    <p class="text-xs text-slate-500">تم تفعيل أزرار التبديل بنجاح، يمكنك الانتقال بين الأقسام والمواد بسلاسة تامة.</p>
+                </div>
+            `;
+        }
+
+        function renderBankView() {
+            const container = document.getElementById('bank-list-container');
+            container.innerHTML = `<div class="bg-white rounded-xl p-4 text-center text-xs font-bold text-slate-500 border border-slate-200">بنك الأسئلة جاهز للبحث والفلترة لمادة ${state.subject.toUpperCase()}</div>`;
+        }
+
+        function resetCurrentQuiz() {
+            alert('تم إعادة تعيين الاختبار بنجاح.');
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            switchSubject('ml');
+        });
+    </script>
+</body>
+</html>
